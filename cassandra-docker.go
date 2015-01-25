@@ -153,6 +153,7 @@ func main() {
 }
 
 func (cdc *CassandraDockerConfig) mkdirs() {
+	os.RemoveAll(cdc.ConfDir) // Remove conf for second time around
 	mkdirAll(cdc.ConfDir)
 	mkdirAll(cdc.DataDir)
 	mkdirAll(cdc.CommitLogDir)
@@ -275,10 +276,18 @@ func (cdc *CassandraDockerConfig) setDefaultIP() {
 		// and is not a loopback, which should cover most Docker setups
 		for _, addr := range addrs {
 			switch v := addr.(type) {
-			case *net.IPAddr:
-				cdc.DefaultIP = v.IP.String()
-				return
+
+			case *net.IPNet:
+				if strings.HasPrefix(v.IP.String(), "172.17.0") {
+					cdc.DefaultIP = v.IP.String()
+					return
+				}
 			}
+
+			//case *net.IPAddr:
+			//	cdc.DefaultIP = v.IP.String()
+			//	return
+			//}
 		}
 	}
 }
